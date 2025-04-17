@@ -1,5 +1,7 @@
 const User = require("../models/user.model");
 const Lead = require("../models/lead.model");
+const bcrypt = require('bcryptjs');
+
 // GET /
 exports.welcome = (req, res) => {
   res.send("Welcome to the employer API");
@@ -41,20 +43,22 @@ exports.createManager = async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
+    
     if (existingUser)
       return res.status(400).json({ message: "Manager already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const manager = new User({
-      username: name,
+      name,
       email,
       password: hashedPassword,
-      role: "manager",
+      role: "manager"
     });
     await manager.save();
 
     res.status(201).json({ message: "Manager created successfully" });
   } catch (error) {
+    console.error("Error creating manager:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -64,7 +68,7 @@ exports.updateManager = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     await User.findByIdAndUpdate(req.params.managerId, {
-      username: name,
+      name: name,
       email,
       password: hashedPassword,
     });
