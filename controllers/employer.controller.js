@@ -13,9 +13,9 @@ exports.getStatistics = async (req, res) => {
       const employerId = req.user.id;
   
       const [inProgress, completed, canceled] = await Promise.all([
-        Lead.countDocuments({ status: "IN_PROGRESS", createdBy: employerId }),
-        Lead.countDocuments({ status: "COMPLETED", createdBy: employerId }),
-        Lead.countDocuments({ status: "CANCELED", createdBy: employerId }),
+        Lead.countDocuments({ status: "IN_PROGRESS"}),
+        Lead.countDocuments({ status: "COMPLETED"}),
+        Lead.countDocuments({ status: "CANCELED"}),
       ]);
   
       res.status(200).json({
