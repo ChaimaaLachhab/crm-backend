@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
 const Lead = require("../models/lead.model");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
 
 // GET /
 exports.welcome = (req, res) => {
@@ -9,25 +9,30 @@ exports.welcome = (req, res) => {
 
 // Dashboard
 exports.getStatistics = async (req, res) => {
-    try {
-      const employerId = req.user.id;
-  
-      const [inProgress, completed, canceled] = await Promise.all([
-        Lead.countDocuments({ status: "IN_PROGRESS"}),
-        Lead.countDocuments({ status: "COMPLETED"}),
-        Lead.countDocuments({ status: "CANCELED"}),
-      ]);
-  
-      res.status(200).json({
-        IN_PROGRESS: inProgress,
-        COMPLETED: completed,
-        CANCELED: canceled,
-      });
-    } catch (err) {
-      console.error("Error fetching dashboard stats:", err);
-      res.status(500).json({ message: "Server error" });
-    }
-  };
+  try {
+    const employerId = req.user.id;
+
+    const [inProgress, completed, canceled, totalLeads, totalManagers] = await Promise.all([
+      Lead.countDocuments({ status: "IN_PROGRESS"}),
+      Lead.countDocuments({ status: "COMPLETED"}),
+      Lead.countDocuments({ status: "CANCELED"}),
+      Lead.countDocuments(),
+      User.countDocuments({ role: "manager"}),
+    ]);
+
+    res.status(200).json({
+      leadsInProgress: inProgress,
+      leadsCompleted: completed,
+      leadsCanceled: canceled,
+      totalLeads: totalLeads,
+      totalManagers: totalManagers,
+    });
+  } catch (err) {
+    console.error("Error fetching dashboard stats:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 // Managers
 exports.getManagers = async (req, res) => {
@@ -43,7 +48,7 @@ exports.createManager = async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
-    
+
     if (existingUser)
       return res.status(400).json({ message: "Manager already exists" });
 
@@ -52,7 +57,7 @@ exports.createManager = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "manager"
+      role: "manager",
     });
     await manager.save();
 
